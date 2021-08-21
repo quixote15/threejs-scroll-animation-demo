@@ -2,6 +2,8 @@ import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
+	
 // Setup
 
 const scene = new THREE.Scene();
@@ -65,11 +67,44 @@ scene.background = spaceTexture;
 
 // Avatar
 
-const jeffTexture = new THREE.TextureLoader().load('jeff.png');
+const jeffTexture = new THREE.TextureLoader().load('tiago.jpeg');
 
 const jeff = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), new THREE.MeshBasicMaterial({ map: jeffTexture }));
 
 scene.add(jeff);
+
+// stormtrooper
+
+let mixer, clock, stormtrooper;
+const loader = new ColladaLoader();
+				loader.load( './stormtrooper.dae', function ( collada ) {
+
+					const avatar = collada.scene;
+					const animations = avatar.animations;
+
+          avatar.position.x = -5
+          avatar.position.z = 30
+
+					avatar.traverse( function ( node ) {
+
+						if ( node.isSkinnedMesh ) {
+
+							node.frustumCulled = false;
+
+						}
+
+					} );
+
+					mixer = new THREE.AnimationMixer( avatar );
+          
+					mixer.clipAction( animations[ 0 ] ).play();
+          stormtrooper = avatar
+          console.log('mixer',mixer)
+          console.log('collada', collada)
+					scene.add( avatar );
+
+} );
+
 
 // Moon
 
@@ -92,6 +127,10 @@ moon.position.setX(-10);
 jeff.position.z = -5;
 jeff.position.x = 2;
 
+//stormtrooper.position.y += 0
+//stormtrooper.position.z += 5
+
+
 // Scroll Animation
 
 function moveCamera() {
@@ -103,6 +142,9 @@ function moveCamera() {
   jeff.rotation.y += 0.01;
   jeff.rotation.z += 0.01;
 
+ // stormtrooper.rotation.y += 0.05
+  //stormtrooper.rotation.z += 0.05
+
   camera.position.z = t * -0.01;
   camera.position.x = t * -0.0002;
   camera.rotation.y = t * -0.0002;
@@ -110,6 +152,22 @@ function moveCamera() {
 
 document.body.onscroll = moveCamera;
 moveCamera();
+
+clock = new THREE.Clock();
+
+function animateTrooper() {
+
+  if(!clock) return
+  const delta = clock.getDelta();
+
+  if ( mixer !== undefined ) {
+
+    mixer.update( delta );
+
+  }
+
+
+}
 
 // Animation Loop
 
@@ -122,6 +180,7 @@ function animate() {
 
   moon.rotation.x += 0.005;
 
+  animateTrooper()
   // controls.update();
 
   renderer.render(scene, camera);
